@@ -1,4 +1,7 @@
-import { TelegramBot, UpdateType } from "https://deno.land/x/telegram_bot_api/mod.ts";
+import {
+  TelegramBot,
+  UpdateType,
+} from "https://deno.land/x/telegram_bot_api/mod.ts";
 import { isPrivateMessage } from "./utils.ts";
 
 const BOT_GROUP_ID = Deno.env.get("BOT_GROUP_ID");
@@ -39,14 +42,37 @@ export const repost = (bot: TelegramBot) => {
       });
     }
 
-    // For photo
-    // if (message.photo) {
-    //   for (const photo of message.photo) {
-    //     await bot.sendPhoto({
-    //       chat_id: BOT_GROUP_ID,
-    //       photo: photo.file_id,
-    //     });
-    //   }
-    // }
+    // For photos
+    if (message.photo) {
+      /**
+       * Last element of `photo` array is a biggest photo
+       * after compression by Telegram Bot API
+       */
+      const photo = message.photo[message.photo.length - 1];
+      await bot.sendPhoto({
+        chat_id: BOT_GROUP_ID,
+        photo: photo.file_id,
+      });
+    }
+
+    // For GIFs
+    if (message.animation) {
+      await bot.sendAnimation({
+        chat_id: BOT_GROUP_ID,
+        animation: message.animation.file_id,
+      });
+    }
+
+    // For polls
+    if (message.poll) {
+      const { options, id, total_voter_count, ...params } = message.poll;
+      const optionsPlain = options.map((option) => option.text);
+
+      await bot.sendPoll({
+        chat_id: BOT_GROUP_ID,
+        ...params,
+        options: optionsPlain,
+      });
+    }
   });
 };
